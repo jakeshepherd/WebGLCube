@@ -20,24 +20,25 @@
             // Note: You can add your own here, e.g. to store the rendering mode.
             var camera, scene, renderer, mesh, cube, light, bunny;
 
-						var shouldRotate = false;
-						var shouldOrbit = false;
-						var bunnyRender = false;
-						var cubeRender = true;
+			var shouldRotate = false;
+			var shouldOrbit = false;
 
-						var xCam = 3;
-						var yCam = 4;
-						var zCam = 5;
-						var lookAtX = 0;
-						var lookAtY = 0;
-						var lookAtZ = 0;
+			var bunnyRender = false;
+			var cubeRender = true;
+
+			var xCam = 3;
+			var yCam = 4;
+			var zCam = 5;
+			var lookAtX = 0;
+			var lookAtY = 0;
+			var lookAtZ = 0;
 
 
 
 
             // Initialise the scene, and draw it for the first time.
             init();
-						animate();
+			animate();
 
             // Listen for keyboard events, to react to them.
             // Note: there are also other event listeners, e.g. for mouse events.
@@ -57,12 +58,11 @@
                 scene.add(new THREE.GridHelper(10, 20, 0xffffff));
 
                 //Draw a cube (requirement 1).
-								// could use with a check, to decide whether to draw a normal cube, or a textured cube.
-								drawMesh();
+				drawMesh();
 
 
                 // Visualise the axes (requirment 2).
-								visualiseAxis();
+				visualiseAxis();
 
                 // Basic ambient lighting.
                 scene.add(new THREE.AmbientLight(0xffffff));
@@ -70,10 +70,6 @@
                 // TO DO: add more complex lighting for 'face' rendering mode (requirement 4).
 
 
-
-				//light = new THREE.DirectionalLight(0xdddddd, 0.8);
-				//light.position.set(-80, 80, 80);
-				//scene.add(light);
 
                 // Set up the Web GL renderer.
                 renderer = new THREE.WebGLRenderer({ antialias: true });
@@ -89,10 +85,9 @@
 
 			// Animation loop function. This function is called whenever an update is required.
 			function animate(){
-
         		requestAnimationFrame(animate);
 
-				//rotates cube (requirement 3).
+				//requirement 3
 				if(shouldRotate){
 					rotateCube();
 				}
@@ -100,17 +95,6 @@
         		// Render the current scene to the screen.
         		renderer.render(scene, camera);
 			}
-
-			function rotateCube(){
-				var speed = 0.02;
-				cube.rotation.x += speed;
-				cube.rotation.y += speed;
-				cube.rotation.z += speed;
-			}
-
-	
-
-
 
 
             // Handle resizing of the browser window.
@@ -120,65 +104,87 @@
 				renderer.setSize(window.innerWidth, window.innerHeight);
 			}
 
+			function drawMesh(){
+				if(bunnyRender){
+					loadBunny();
+				}else if(cubeRender){
+					drawTexturedCube();
+				}
+			}
 
-            // Handle keyboard presses.
-          	function handleKeyDown(event){
-                switch (event.keyCode){
-                    // Render modes.
-                    case 70: // f = face
-										drawTexturedCube();
+			// draws cube with different faces
+			function drawTexturedCube(){
+				scene.remove(cube);
+				scene.remove(bunny);
 
-                    break;
+				var textureLoader = new THREE.TextureLoader();
 
-                    case 69: // e = edge
-										//IIIII IIIII I IIII
-												drawEdgedCube();
-                        break;
+				var geometry = new THREE.BoxBufferGeometry(2, 2, 2);
+				var materials = [
+					new THREE.MeshBasicMaterial({map: textureLoader.load('images/football.jpg')}),
+					new THREE.MeshBasicMaterial({map: textureLoader.load('images/rugby.jpg')}),
+					new THREE.MeshBasicMaterial({map: textureLoader.load('images/golf.jpg')}),
+					new THREE.MeshBasicMaterial({map: textureLoader.load('images/tennis.jpg')}),
+					new THREE.MeshBasicMaterial({map: textureLoader.load('images/baseball.jpg')}),
+					new THREE.MeshBasicMaterial({map: textureLoader.load('images/basketball.png')})
+				];
 
-                    case 86: // v = vertex
-												drawVerticedCube();
-                        break;
-
-					// starting and stopping rotation (space)
-					case 32:
-						shouldRotate = !shouldRotate;
-						break;
-
-					case 38: // up key
-					translateCameraUp();
-
-							break;
-
-					case 40: // down key
-					translateCameraDown();
-
-							break;
-					case 65: // left key
-							translateCameraLeft();
-							break;
-					case 68: // right key
-							translateCameraRight();
-							break;
-					case 83: // w key
-					translateCameraForward();
-
-							break;
-					case 87: // s key
-					translateCameraBackward();
-							break;
-
-					case 79:
-					shouldOrbit=!shouldOrbit;
-					break;
-
-					case 82:
-						bunnyRender = !bunnyRender;
-						cubeRender = !cubeRender;
-						break;
+				cube = new THREE.Mesh(geometry, materials);
+				scene.add(cube);
+			}
 
 
-                }
-            }
+			function loadBunny(){
+				bunny = new THREE.OBJLoader().load('bunny-5000.obj', function (object) { // function(object) called when the bunny is loaded;
+					mesh = object;
+					scene.add(mesh);
+					renderingBunny = true;
+				});
+			}
+
+			// draws basic cube
+			function drawCube(){
+				scene.remove(cube);
+				var geometry = new THREE.BoxGeometry( 2, 2, 2 );
+				var material = new THREE.MeshBasicMaterial( {color:0x00ff00} );
+				cube = new THREE.Mesh(geometry, material);
+				scene.add(cube);
+			}
+
+			function drawEdgedCube(){
+				scene.remove(cube);
+                var material = new THREE.MeshBasicMaterial( {color: 0x00ff00, wireframe:true});
+                cube = new THREE.Mesh(new THREE.BoxGeometry(2, 2, 2), material);
+                scene.add(cube);
+			}
+
+			function drawVerticedCube(){
+				scene.remove(cube);
+				var geometry = new THREE.Geometry();
+				geometry.vertices.push(
+					new THREE.Vector3( 1, 1, 1),
+                    new THREE.Vector3( 1, 1, -1),
+                    new THREE.Vector3( 1, -1, -1),
+                    new THREE.Vector3( -1, -1, -1),
+                    new THREE.Vector3( -1, 1, 1),
+                    new THREE.Vector3( -1, -1, 1),
+                    new THREE.Vector3( 1, -1, 1),
+                    new THREE.Vector3( -1, 1, -1)
+				);
+
+				var pointMaterial = new THREE.PointsMaterial({color: 0x00ff00, size:0.1});
+				cube = new THREE.Points(geometry, pointMaterial);
+
+				scene.add(cube);
+
+			}
+
+			function rotateCube(){
+				var speed = 0.02;
+				cube.rotation.x += speed;
+				cube.rotation.y += speed;
+				cube.rotation.z += speed;
+			}
 
 			function visualiseAxis(){
 
@@ -210,64 +216,64 @@
 				scene.add(axisLine);
 			}
 
-			function drawTexturedCube(){
-				scene.remove(cube);
-				scene.remove(bunny);
+			// Handle keyboard presses.
+          	function handleKeyDown(event){
+                switch (event.keyCode){
+                    // Render modes.
+                    case 70: // f = face
+						drawTexturedCube();
+						break;
 
-				var textureLoader = new THREE.TextureLoader();
+                    case 69: // e = edge
+						drawEdgedCube();
+                        break;
 
-				var geometry = new THREE.BoxBufferGeometry(2, 2, 2);
-				var materials = [
-					new THREE.MeshBasicMaterial({map: textureLoader.load('images/football.jpg')}),
-					new THREE.MeshBasicMaterial({map: textureLoader.load('images/rugby.jpg')}),
-					new THREE.MeshBasicMaterial({map: textureLoader.load('images/golf.jpg')}),
-					new THREE.MeshBasicMaterial({map: textureLoader.load('images/tennis.jpg')}),
-					new THREE.MeshBasicMaterial({map: textureLoader.load('images/baseball.jpg')}),
-					new THREE.MeshBasicMaterial({map: textureLoader.load('images/basketball.png')})
-				];
+                    case 86: // v = vertex
+						drawVerticedCube();
+                        break;
 
-				cube = new THREE.Mesh(geometry, materials);
-				scene.add(cube);
+					// starting and stopping rotation (space)
+					case 32:
+						shouldRotate = !shouldRotate;
+						break;
 
-			}
+					case 38: // up key
+						translateCameraUp();
+						break;
 
-			function drawCube(){
-				scene.remove(cube);
-				var geometry = new THREE.BoxGeometry( 2, 2, 2 );
-        var material = new THREE.MeshBasicMaterial( {color:0x00ff00} );
-        cube = new THREE.Mesh(geometry, material);
-        scene.add(cube);
-			}
+					case 40: // down key
+						translateCameraDown();
+						break;
 
-			function drawEdgedCube(){
-				scene.remove(cube);
-                var material = new THREE.MeshBasicMaterial( {color: 0x00ff00, wireframe:true});
-                cube = new THREE.Mesh(new THREE.BoxGeometry(2, 2, 2), material);
-                scene.add(cube);
-			}
+					case 65: // left key
+						translateCameraLeft();
+						break;
 
-			function drawVerticedCube(){
-				scene.remove(cube);
-				var geometry = new THREE.Geometry();
-				geometry.vertices.push(
-										new THREE.Vector3( 1, 1, 1),
-                    new THREE.Vector3( 1, 1, -1),
-                    new THREE.Vector3( 1, -1, -1),
-                    new THREE.Vector3( -1, -1, -1),
-                    new THREE.Vector3( -1, 1, 1),
-                    new THREE.Vector3( -1, -1, 1),
-                    new THREE.Vector3( 1, -1, 1),
-                    new THREE.Vector3( -1, 1, -1)
-				);
+					case 68: // right key
+						translateCameraRight();
+						break;
 
-				var pointMaterial = new THREE.PointsMaterial({color: 0x00ff00, size:0.1});
-				cube = new THREE.Points(geometry, pointMaterial);
+					case 83: // w key
+						translateCameraForward();
+						break;
 
-				scene.add(cube);
+					case 87: // s key
+						translateCameraBackward();
+						break;
 
+					case 79: // o
+						shouldOrbit=!shouldOrbit;
+						break;
 
-			}
+					case 82: // r 
+						bunnyRender = !bunnyRender;
+						cubeRender = !cubeRender;
+						drawMesh();
+						break;
+                }
+            }
 
+			// below is translations for the camera on key down events
 
 			function translateCameraLeft(){
 				if(shouldOrbit){
@@ -353,15 +359,6 @@
 				camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 1000);
 				camera.position.set(xCam, yCam, zCam);
 				camera.lookAt(new THREE.Vector3(lookAtX, lookAtY, lookAtZ));
-
-			}
-
-			function drawMesh(){
-				if(bunnyRender){
-					drawObj();
-				}else{
-					drawTexturedCube();
-				}
 
 			}
 
